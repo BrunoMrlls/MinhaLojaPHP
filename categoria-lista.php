@@ -1,9 +1,13 @@
 <?php 
     require_once("cabecalho.php");
-    $categoria = new Categoria();
-    $lista = $categoria->listar();
-
     verificaUsuario();
+    try{
+        $categoria = new Categoria();
+        $lista = $categoria->listar();
+    } catch(Exception $e){
+        Erro::trataErro($e);
+    }
+    
 ?>
 <div class="row col-md-4">
     <a class="btn btn-info btn-block" href="formulario-adiciona-categoria.php">Nova categoria</a>
