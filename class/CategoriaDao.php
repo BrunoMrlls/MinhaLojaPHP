@@ -1,18 +1,16 @@
 <?php
+require_once 'cabecalho.php';
 
 class CategoriaDao{
-
-    private $conexao;
-
-    function __construct($conexao){
-        $this->conexao = $conexao;
-    }
 
 function listaCategorias(){
     $categorias = array();
     $query = "SELECT * FROM categorias";
-    $resultado = mysqli_query($this->conexao, $query);
-    while( $categoriaArray = mysqli_fetch_assoc($resultado) ){
+    $conexao = Conexao::getConection();
+    $result = $conexao->query($query);
+    $lista = $result->fetchAll();
+    
+    foreach( $lista as $categoriaArray ){
         $categoria = new Categoria();
         $categoria->setId($categoriaArray['id']);
         $categoria->setNome($categoriaArray['nome']);

@@ -1,20 +1,19 @@
 <?php 
+require_once 'cabecalho.php';
+
 class ProdutoDao{
 
-    private $conexao;
-
-    function __construct($conexao){
-        $this->conexao = $conexao;
-    }
     function listaProdutos(){
         $produtos = array();
         $query = "SELECT p.*, c.nome 'categoria_nome' FROM produto p
                     JOIN categorias c ON c.id = p.categoria_id
                 ORDER BY nome";
-        $resultado = mysqli_query($this->conexao, $query);
-        
-        while ( $produtoArray = mysqli_fetch_assoc($resultado) ){
-            
+
+        $conexao = Conexao::getConection();
+        $result = $conexao->query($query);
+        $lista = $result->fetchAll();
+
+        foreach ($lista as $produtoArray) {    
             $categoria = new Categoria();
             $categoria->setNome($produtoArray['categoria_nome']);
 
@@ -45,43 +44,43 @@ class ProdutoDao{
 
     function buscaProduto($id){
         $query = "SELECT * FROM produto WHERE id = {$id}";
-        $resultado = mysqli_query($this->conexao, $query);
-        $produtoResult = mysqli_fetch_assoc($resultado);
-        
-        $categoria = new Categoria();
-        $categoria->setId($produtoResult['categoria_id']);
+        $conexao = Conexao::getConection();
+        $result = $conexao->query($query);
+        $lista = $result->fetchAll();
 
-        if ( $produtoResult['tipoProduto'] == "LivroFisico" ) {
-            $produto = new LivroFisico();
-            $produto->setIsbn($produtoResult['isbn']);
-            $produto->setTaxaImpressao($produtoResult['taxaImpressao']);
-        } else if ($produtoResult['tipoProduto'] == "Ebook") {
-            $produto = new Ebook();
-            $produto->setIsbn($produtoResult['isbn']);
-            $produto->setwaterMark($produtoResult['waterMark']);            
-        }else {
-            $produto = new Produto();
+        foreach($lista as $produtoResult){
+            $categoria = new Categoria();
+            $categoria->setId($produtoResult['categoria_id']);
+
+            if ( $produtoResult['tipoProduto'] == "LivroFisico" ) {
+                $produto = new LivroFisico();
+                $produto->setIsbn($produtoResult['isbn']);
+                $produto->setTaxaImpressao($produtoResult['taxaImpressao']);
+            } else if ($produtoResult['tipoProduto'] == "Ebook") {
+                $produto = new Ebook();
+                $produto->setIsbn($produtoResult['isbn']);
+                $produto->setwaterMark($produtoResult['waterMark']);            
+            }else {
+                $produto = new Produto();
+            }
+            $produto->setId($produtoResult['id']);
+            $produto->setNome($produtoResult['nome']);
+            $produto->setPreco($produtoResult['preco']);
+            $produto->setDescricao($produtoResult['descricao']);
+            $produto->setUsado($produtoResult['usado']);
+            $produto->setTipoProduto($produtoResult['tipoProduto']);
+            $produto->setCategoria($categoria);
         }
-        $produto->setId($produtoResult['id']);
-        $produto->setNome($produtoResult['nome']);
-        $produto->setPreco($produtoResult['preco']);
-        $produto->setDescricao($produtoResult['descricao']);
-        $produto->setUsado($produtoResult['usado']);
-        $produto->setTipoProduto($produtoResult['tipoProduto']);
-        $produto->setCategoria($categoria);
-
         return $produto;
     }
 
     function insereProduto(Produto $produto){ 
-        $produto->setNome( mysqli_real_escape_string($this->conexao, $produto->getNome()) );
-        $produto->setDescricao( mysqli_real_escape_string($this->conexao, $produto->getDescricao()) );
-        
+
         $waterMark = "";
         $isbn = "";
         $taxaImpressao = "0";
         if ($produto->temWaterMark()) $waterMark = $produto->getWaterMark();
-        if ($produto->temIsbn())  $isbn = $produto->getIsbn();
+        if ($produto->temIsbn()) $isbn = $produto->getIsbn();
         if ($produto->temTaxaImpressao()) $taxaImpressao = $produto->getTaxaImpressao();
 
         $query = "INSERT INTO produto 
@@ -106,8 +105,8 @@ class ProdutoDao{
                     , $taxaImpressao
                     , '{$waterMark}'
                   )"; 
-        
-        return mysqli_query($this->conexao, $query);
+        $conexao = Conexao::getConection();
+        return $conexao->exec($query);
     }
 
     function alteraProduto(Produto $produto){
@@ -133,13 +132,14 @@ class ProdutoDao{
                     , taxaImpressao='{$taxaImpressao}'
                     , waterMark='{$waterMark}' 
                  WHERE id = {$produto->getId()} " ; 
-
-        return mysqli_query($this->conexao, $query);
+        $conexao = Conexao::getConection();
+        return $conexao->exec($query);
     }
 
     function removeProduto($id){
         $query="DELETE FROM produto WHERE id = {$id}";
-        return mysqli_query($this->conexao, $query);
+        $conexao = Conexao::getConection();
+        return $conexao->exec($query);
     }
 
 }

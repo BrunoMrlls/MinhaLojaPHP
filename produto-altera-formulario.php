@@ -2,12 +2,13 @@
     require_once("cabecalho.php"); 
     
     $id = $_GET['id'];
-    $produtoDao = new ProdutoDao($conexao);
+    $produtoDao = new ProdutoDao();
     $produto = $produtoDao->buscaProduto($id);
     
-    $categoriaDao = new CategoriaDao($conexao);
+    $categoriaDao = new CategoriaDao();
     $categorias = $categoriaDao->listaCategorias();      
     $usado = $produto->getUsado() ? "checked='checked'" : "";
+ 
 ?>
 <form action="altera-produto.php" method="POST">
     <input type="hidden" name="id" value="<?=$produto->getId()?>">

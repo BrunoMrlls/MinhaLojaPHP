@@ -31,7 +31,7 @@ $produto->setCategoria($categoria);
 $produto->setUsado(array_key_exists('usado', $_POST) ? "true" : "false");
 
 $produto->setTipoProduto($_POST['tipoProduto']);
-$produtoDao = new ProdutoDao($conexao);
+$produtoDao = new ProdutoDao();
 if ( $produtoDao->insereProduto($produto) ) {
     $_SESSION['success'] = "Produto ".$produto->getNome().", R$ ".$produto->getPreco()." adicionado com sucesso! ";
 }else{ 

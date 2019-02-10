@@ -1,7 +1,7 @@
 <?php 
     require_once("cabecalho.php"); 
     
-    $categoriaDao = new CategoriaDao($conexao);
+    $categoriaDao = new CategoriaDao();
     $categorias = $categoriaDao->listaCategorias();
 
     
@@ -14,7 +14,7 @@
     $produto->setPreco("");
     $produto->setCategoria($categoria);
     $produto->setUsado(false);
-    $usuada = "";
+    $usado = "";
 ?>
 <form action="adiciona-produto.php" method="POST">
     <table class="table">
@@ -22,7 +22,7 @@
         <?php require_once("formulario-produto-base.php");?>  
     
         <tr>
-           <td> <input class="btn btn-primary" type="submit" value="Cadastrar"> </td>
+           <td> <input class="btn btn-success" type="submit" value="Cadastrar"> </td>
         </td>
     </table>
 </form>
