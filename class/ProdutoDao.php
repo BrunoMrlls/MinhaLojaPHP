@@ -43,34 +43,35 @@ class ProdutoDao{
     }
 
     function buscaProduto($id){
-        $query = "SELECT * FROM produto WHERE id = {$id}";
+        $query = "SELECT * FROM produto WHERE id = :id";
         $conexao = Conexao::getConection();
-        $result = $conexao->query($query);
-        $lista = $result->fetchAll();
+        $stmt = $conexao->prepare($query);
+        $stmt->bindValue(':id', $id);
+        $stmt->execute();
+        $produtoResult = $stmt->fetch();
 
-        foreach($lista as $produtoResult){
-            $categoria = new Categoria();
-            $categoria->setId($produtoResult['categoria_id']);
+        $categoria = new Categoria();
+        $categoria->setId($produtoResult['categoria_id']);
 
-            if ( $produtoResult['tipoProduto'] == "LivroFisico" ) {
-                $produto = new LivroFisico();
-                $produto->setIsbn($produtoResult['isbn']);
-                $produto->setTaxaImpressao($produtoResult['taxaImpressao']);
-            } else if ($produtoResult['tipoProduto'] == "Ebook") {
-                $produto = new Ebook();
-                $produto->setIsbn($produtoResult['isbn']);
-                $produto->setwaterMark($produtoResult['waterMark']);            
-            }else {
-                $produto = new Produto();
-            }
-            $produto->setId($produtoResult['id']);
-            $produto->setNome($produtoResult['nome']);
-            $produto->setPreco($produtoResult['preco']);
-            $produto->setDescricao($produtoResult['descricao']);
-            $produto->setUsado($produtoResult['usado']);
-            $produto->setTipoProduto($produtoResult['tipoProduto']);
-            $produto->setCategoria($categoria);
+        if ( $produtoResult['tipoProduto'] == "LivroFisico" ) {
+            $produto = new LivroFisico();
+            $produto->setIsbn($produtoResult['isbn']);
+            $produto->setTaxaImpressao($produtoResult['taxaImpressao']);
+        } else if ($produtoResult['tipoProduto'] == "Ebook") {
+            $produto = new Ebook();
+            $produto->setIsbn($produtoResult['isbn']);
+            $produto->setwaterMark($produtoResult['waterMark']);            
+        }else {
+            $produto = new Produto();
         }
+        $produto->setId($produtoResult['id']);
+        $produto->setNome($produtoResult['nome']);
+        $produto->setPreco($produtoResult['preco']);
+        $produto->setDescricao($produtoResult['descricao']);
+        $produto->setUsado($produtoResult['usado']);
+        $produto->setTipoProduto($produtoResult['tipoProduto']);
+        $produto->setCategoria($categoria);
+
         return $produto;
     }
 
@@ -83,7 +84,7 @@ class ProdutoDao{
         if ($produto->temIsbn()) $isbn = $produto->getIsbn();
         if ($produto->temTaxaImpressao()) $taxaImpressao = $produto->getTaxaImpressao();
 
-        $query = "INSERT INTO produto 
+        $query = " INSERT INTO produto 
             (nome
             , preco
             , descricao
@@ -95,18 +96,28 @@ class ProdutoDao{
             , waterMark) 
                   VALUES 
                   (
-                     '{$produto->getNome()}'
-                    , {$produto->getPreco()}
-                    , '{$produto->getDescricao()}'
-                    , '{$produto->getCategoria()->getId()}'
-                    , {$produto->getUsado()}
-                    , '{$isbn}'
-                    , '{$produto->getTipoProduto()}'
-                    , $taxaImpressao
-                    , '{$waterMark}'
-                  )"; 
+                     :nome
+                    , :preco
+                    , :descricao
+                    , :categoria_id
+                    , :isUsado
+                    , :isbn
+                    , :tipoProduto
+                    , :taxaImpressao
+                    , :waterMark
+                  ) "; 
         $conexao = Conexao::getConection();
-        return $conexao->exec($query);
+        $stmt = $conexao->prepare($query);
+        $stmt->bindValue(':nome', $produto->getNome());
+        $stmt->bindValue(':preco', $produto->getPreco());
+        $stmt->bindValue(':descricao', $produto->getDescricao());
+        $stmt->bindValue(':categoria_id', $produto->getCategoria()->getId());
+        $stmt->bindValue(':isUsado', $produto->getUsado() == true ? 1 : 0);
+        $stmt->bindValue(':isbn', $isbn);
+        $stmt->bindValue(':tipoProduto', $produto->getTipoProduto());
+        $stmt->bindValue(':taxaImpressao', $taxaImpressao);
+        $stmt->bindValue(':waterMark', $waterMark);
+        return $stmt->execute();
     }
 
     function alteraProduto(Produto $produto){
@@ -122,24 +133,37 @@ class ProdutoDao{
             $waterMark = $produto->getWaterMark();
         }
         $query = "UPDATE produto SET 
-                    nome='{$produto->getNome()}'
-                    , preco={$produto->getPreco()} 
-                    , descricao='{$produto->getDescricao()}'
-                    , categoria_id={$produto->getCategoria()->getId()}
-                    , usado={$produto->getUsado()} 
-                    , tipoProduto='{$tipoProduto}'
-                    , isbn='{$isbn}' 
-                    , taxaImpressao='{$taxaImpressao}'
-                    , waterMark='{$waterMark}' 
-                 WHERE id = {$produto->getId()} " ; 
+                      nome          = :nome
+                    , preco         = :preco 
+                    , descricao     = :descricao
+                    , categoria_id  = :categoria_id
+                    , usado         = :isUsado 
+                    , tipoProduto   = :tipoProduto
+                    , isbn          = :isbn 
+                    , taxaImpressao = :taxaImpressao
+                    , waterMark     = :waterMark 
+                 WHERE id = :id " ; 
         $conexao = Conexao::getConection();
-        return $conexao->exec($query);
+        $stmt = $conexao->prepare($query);
+        $stmt->bindValue(':id', $produto->getId());
+        $stmt->bindValue(':nome', $produto->getNome());
+        $stmt->bindValue(':preco', $produto->getPreco());
+        $stmt->bindValue(':descricao', $produto->getDescricao());
+        $stmt->bindValue(':categoria_id', $produto->getCategoria()->getId());
+        $stmt->bindValue(':isUsado', $produto->getUsado() == true ? 1 : 0);
+        $stmt->bindValue(':tipoProduto', $tipoProduto);
+        $stmt->bindValue(':isbn', $isbn);
+        $stmt->bindValue(':taxaImpressao', $taxaImpressao);
+        $stmt->bindValue(':waterMark', $waterMark);
+        return $stmt->execute();
     }
 
     function removeProduto($id){
-        $query="DELETE FROM produto WHERE id = {$id}";
+        $query="DELETE FROM produto WHERE id = :id";
         $conexao = Conexao::getConection();
-        return $conexao->exec($query);
+        $stmt = $conexao->prepare($query);
+        $stmt->bindValue(':id', $id);
+        return $stmt->execute();
     }
 
 }
